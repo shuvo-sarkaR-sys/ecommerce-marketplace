@@ -13,6 +13,7 @@ interface ApiProduct {
   price: number;
   compareAtPrice?: number | null;
   colors: string[];
+  images: string[];
   badges?: ProductCardData["badges"];
   brand: { name?: string } | null;
 }
@@ -37,6 +38,7 @@ function toCardData(doc: ApiProduct): ProductCardData {
     compareAtPrice: doc.compareAtPrice ?? null,
     brandName: doc.brand?.name ?? "MAISON",
     colors: doc.colors,
+    images: doc.images,
     badges: doc.badges ?? [],
   };
 }
@@ -111,5 +113,15 @@ export interface FeaturedCategoryData {
 
 export async function getFeaturedCategories(): Promise<FeaturedCategoryData[]> {
   const { categories } = await fetchJSON<{ categories: ApiCategory[] }>('/api/categories');
-  return categories.slice(0, 6).map((c) => ({ slug: c.slug, name: c.name, image: c.image ?? null }));
+  const categoryOrder = ["women", "men", "accessories", "shoe", "bags", "beauty"];
+  const bySlug = new Map(categories.map((category) => [category.slug === "shoes" ? "shoe" : category.slug, category]));
+
+  return categoryOrder
+    .map((slug) => bySlug.get(slug))
+    .filter((category): category is ApiCategory => Boolean(category))
+    .map((category) => ({
+      slug: category.slug === "shoes" ? "shoe" : category.slug,
+      name: category.slug === "shoes" ? "Shoe" : category.name,
+      image: category.image ?? null,
+    }));
 }

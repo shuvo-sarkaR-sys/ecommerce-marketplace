@@ -67,6 +67,7 @@ export function Header() {
             >
               <Link
                 href={link.href}
+                onClick={() => setOpenMenu(null)}
                 className="font-sans text-caption uppercase tracking-[0.06em] text-ink hover:text-charcoal"
               >
                 {link.label}

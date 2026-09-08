@@ -4,7 +4,13 @@ import { ArrowUpRight } from "lucide-react";
 import { getFeaturedCategories } from "@/lib/data/home";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { cn } from "@/lib/utils";
-import mens from "@/aseets/mens.jpg";
+import mens from "@/aseets/men-img.png";
+import women from "@/aseets/womens.png";
+import accessories from "@/aseets/accessories.png"
+import shoe from "@/aseets/shoe.jpg"
+import bag from "@/aseets/bags.jpg" 
+import beauty from "@/aseets/beauty.png" 
+
 // Asymmetric spans for up to six categories: first two form a wide top row,
 // the rest sit in an even row beneath -- avoids a uniform card grid.
 const SPANS = [
@@ -17,12 +23,12 @@ const SPANS = [
 ];
 
 const CATEGORY_IMAGES = [
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80",
+  women,
   mens,
-  "https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?w=1200&q=80",
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=80",
-  "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1200&q=80",
-  "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&q=80",
+  accessories,
+  shoe,
+  bag,
+   beauty,
 ];
 
 export async function FeaturedCategories() {
@@ -52,7 +58,7 @@ export async function FeaturedCategories() {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   alt={category.name}
                   className={cn(
-                    "w-full object-cover",
+                    "w-full object-cover object-top",
                     isWideCategory
                       ? i === 1
                         ? "aspect-[16/10] md:aspect-[8/7]"

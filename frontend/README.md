@@ -12,8 +12,7 @@ cp .env.example .env.local
 ```
 
 Set **BACKEND_URL** in `.env.local` to wherever the backend is running
-(`http://localhost:5000` in dev). Then, with the backend already running and
-seeded (see `../backend/README.md`):
+(`http://localhost:5000` in dev). Then, with the backend already running:
 
 ```bash
 npm run dev

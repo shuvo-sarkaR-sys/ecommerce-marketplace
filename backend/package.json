@@ -6,7 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js",
-    "seed": "tsx scripts/seed.ts",
+    "clear-data": "tsx scripts/clear-data.ts",
     "lint": "eslint ."
   },
   "dependencies": {

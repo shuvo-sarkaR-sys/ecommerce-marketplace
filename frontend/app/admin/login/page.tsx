@@ -44,7 +44,7 @@ function AdminLoginForm() {
         <Input label="Admin Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
         <Input label="Password" type="password" autoComplete="current-password" {...register("password")} error={errors.password?.message} />
         {formError && <p className="text-caption text-oxblood">{formError}</p>}
-        <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
+        <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2 text-white">
           {isSubmitting ? "Signing In…" : "Sign In as Admin"}
         </Button>
       </form>

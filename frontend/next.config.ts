@@ -5,6 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:5000";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      { protocol: "http", hostname: "localhost", port: "5000" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],

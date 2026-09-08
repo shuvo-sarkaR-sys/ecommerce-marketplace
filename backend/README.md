@@ -18,7 +18,7 @@ src/
   routes/                Express routers, mounted under /api
   middleware/            requireAuth / requireRole, central error handler
   utils/                 JWT, password hashing, slugify, response helpers
-scripts/seed.ts          Seed script (12 brands, 50+ products, sample order/review)
+scripts/clear-data.ts    Explicitly confirmation-gated database reset
 ```
 
 ## Getting started
@@ -32,9 +32,10 @@ Fill in `.env`:
 - **MONGODB_URI** — free-tier cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
 - **JWT_ACCESS_SECRET** / **JWT_REFRESH_SECRET** — two different long random strings (`openssl rand -base64 48`)
 - **FRONTEND_URL** — where the Next.js app runs (`http://localhost:3000` in dev); required for CORS
+- **CLOUDINARY_CLOUD_NAME**, **CLOUDINARY_API_KEY**, **CLOUDINARY_API_SECRET** — required for product image uploads
 
 ```bash
-npm run seed   # populate the database
+npm run clear-data   # only with CONFIRM_CLEAR_DATA=YES; deletes every collection
 npm run dev    # http://localhost:5000, restarts on change via tsx watch
 ```
 

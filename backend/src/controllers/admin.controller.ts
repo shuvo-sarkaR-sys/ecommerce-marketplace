@@ -1,22 +1,20 @@
 import type { Request, Response } from "express";
-import fs from "node:fs";
-import path from "node:path";
 import multer from "multer";
 import * as adminService from "../services/admin.service";
 import { asyncHandler, ok } from "../utils/http";
+import { uploadProductImage } from "../config/cloudinary";
+import { updateBrandSchema } from "../validators/catalog.validators";
 
-const uploadDirectory = path.join(process.cwd(), "uploads", "products");
-fs.mkdirSync(uploadDirectory, { recursive: true });
 const productUpload = multer({
-  storage: multer.diskStorage({
-    destination: uploadDirectory,
-    filename: (_req, file, callback) => {
-      const extension = path.extname(file.originalname).toLowerCase();
-      callback(null, `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${extension}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { files: 6, fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, callback) => callback(null, file.mimetype.startsWith("image/")),
+  fileFilter: (_req, file, callback) => {
+    if (!file.mimetype.startsWith("image/")) {
+      callback(new Error("Only image files are allowed"));
+      return;
+    }
+    callback(null, true);
+  },
 });
 
 export const uploadProductImages = [
@@ -24,8 +22,8 @@ export const uploadProductImages = [
   asyncHandler(async (req: Request, res: Response) => {
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
     if (files.length === 0) return res.status(400).json({ success: false, error: "Select at least one image" });
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-    ok(res, { images: files.map((file) => `${baseUrl}/uploads/products/${file.filename}`) }, 201);
+    const images = await Promise.all(files.map((file) => uploadProductImage(file.buffer)));
+    ok(res, { images }, 201);
   }),
 ];
 
@@ -35,6 +33,11 @@ export const overview = asyncHandler(async (_req: Request, res: Response) => {
 
 export const updateBrandStatus = asyncHandler(async (req: Request, res: Response) => {
   ok(res, { brand: await adminService.updateBrandStatus(req.params.id, req.body.status) });
+});
+
+export const updateBrand = asyncHandler(async (req: Request, res: Response) => {
+  const input = updateBrandSchema.parse(req.body);
+  ok(res, { brand: await adminService.updateBrand(req.params.id, input) });
 });
 
 export const updateProductStatus = asyncHandler(async (req: Request, res: Response) => {

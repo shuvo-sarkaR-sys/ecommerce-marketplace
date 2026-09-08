@@ -17,9 +17,16 @@ const REFRESH_TOKEN_TTL = "30d";
 function getSecrets() {
   const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
   const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-  if (!ACCESS_SECRET || !REFRESH_SECRET) {
+  if (
+    !ACCESS_SECRET ||
+    !REFRESH_SECRET ||
+    ACCESS_SECRET.length < 32 ||
+    REFRESH_SECRET.length < 32 ||
+    ACCESS_SECRET.startsWith("replace-") ||
+    REFRESH_SECRET.startsWith("replace-")
+  ) {
     throw new Error(
-      "Missing JWT_ACCESS_SECRET or JWT_REFRESH_SECRET. Set them in .env (see .env.example).",
+      "JWT secrets must be different random values of at least 32 characters. Set them in .env (see .env.example).",
     );
   }
   return { ACCESS_SECRET, REFRESH_SECRET };

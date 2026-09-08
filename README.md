@@ -19,7 +19,7 @@ backend/    Express + TypeScript + MongoDB REST API -- see backend/README.md
 cd backend
 npm install
 cp .env.example .env      # fill in MONGODB_URI, JWT secrets, FRONTEND_URL
-npm run seed
+# No demo data is created automatically.
 npm run dev                # http://localhost:5000
 
 # Terminal 2 -- frontend

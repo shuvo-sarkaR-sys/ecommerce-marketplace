@@ -63,7 +63,7 @@ function LoginForm() {
 
         {formError && <p className="text-caption text-oxblood">{formError}</p>}
 
-        <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
+        <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2 text-white">
           {isSubmitting ? "Signing In…" : "Sign In"}
         </Button>
       </form>

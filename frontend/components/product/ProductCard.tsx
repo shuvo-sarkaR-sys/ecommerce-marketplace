@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
@@ -16,11 +17,24 @@ export interface ProductCardData {
   compareAtPrice?: number | null;
   brandName: string;
   colors: string[];
+  images?: string[];
   badges: ProductBadge[];
+}
+
+function isUsableImageUrl(value: string | undefined): value is string {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const badges = product.badges ?? [];
+  const imageSrc = isUsableImageUrl(product.images?.[0]) ? product.images[0] : null;
   const [wishlisted, setWishlisted] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -33,10 +47,22 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       onMouseLeave={() => setHovered(false)}
     >
       <Link href={`/product/${product.slug}`} className="relative block">
-        <ImagePlaceholder
-          label={product.name}
-          className="transition-transform duration-500 ease-editorial group-hover:scale-[1.03]"
-        />
+        {imageSrc ? (
+          <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
+            <Image
+              src={imageSrc}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 ease-editorial group-hover:scale-[1.03]"
+            />
+          </div>
+        ) : (
+          <ImagePlaceholder
+            label={product.name}
+            className="transition-transform duration-500 ease-editorial group-hover:scale-[1.03]"
+          />
+        )}
 
         {badges.length > 0 && (
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">

@@ -47,7 +47,7 @@ export default function AdminRegisterPage() {
           <Input label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
           <Input label="Admin Setup Key" type="password" autoComplete="off" {...register("setupKey")} error={errors.setupKey?.message} />
           {formError && <p className="text-caption text-oxblood">{formError}</p>}
-          <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
+          <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2 text-white">
             {isSubmitting ? "Creating Account…" : "Create Admin Account"}
           </Button>
         </form>

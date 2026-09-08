@@ -4,7 +4,6 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
-import path from "node:path";
 import routes from "./routes";
 import { notFound, errorHandler } from "./middleware/errorHandler";
 
@@ -44,7 +43,6 @@ export function createApp(): Express {
   );
 
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
   app.use("/api", routes);
 
   app.use(notFound);

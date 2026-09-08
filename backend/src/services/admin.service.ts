@@ -5,6 +5,9 @@ import { Order, type OrderStatus } from "../models/Order";
 import { Category } from "../models/Category";
 import { Review } from "../models/Review";
 import { ApiError } from "../utils/http";
+import * as brandService from "./brand.service";
+import type { updateBrandSchema } from "../validators/catalog.validators";
+import type { z } from "zod";
 
 const brandStatuses: BrandStatus[] = ["pending", "approved", "rejected", "suspended"];
 const productStatuses: ProductStatus[] = ["draft", "pending", "approved", "rejected"];
@@ -129,5 +132,16 @@ export async function listResource(resource: string) {
       };
     default:
       throw new ApiError("Unknown admin resource", 404);
+  }
+}
+
+export async function updateBrand(id: string, input: z.infer<typeof updateBrandSchema>) {
+  try {
+    return await brandService.updateBrand(id, input);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Brand not found") {
+      throw new ApiError(error.message, 404);
+    }
+    throw error;
   }
 }

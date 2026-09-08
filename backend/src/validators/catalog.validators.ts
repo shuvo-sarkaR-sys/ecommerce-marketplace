@@ -17,3 +17,5 @@ export const onboardBrandSchema = z.object({
     .optional()
     .default([]),
 });
+
+  export const updateBrandSchema = onboardBrandSchema.partial();

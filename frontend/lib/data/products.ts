@@ -47,6 +47,7 @@ export async function getRelatedProducts(
     price: number;
     compareAtPrice?: number | null;
     colors: string[];
+    images: string[];
     badges?: ProductBadge[];
     brand: { name?: string } | null;
   }
@@ -62,6 +63,7 @@ export async function getRelatedProducts(
       compareAtPrice: p.compareAtPrice ?? null,
       brandName: p.brand?.name ?? "MAISON",
       colors: p.colors,
+      images: p.images,
       badges: p.badges ?? [],
     }));
 }
