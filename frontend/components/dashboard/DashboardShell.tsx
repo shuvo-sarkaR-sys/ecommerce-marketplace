@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 export interface DashboardNavItem {
   label: string;
@@ -11,12 +12,14 @@ export function DashboardShell({
   subtitle,
   navItems,
   activeHref,
+  showLogout = false,
   children,
 }: {
   title: string;
   subtitle: string;
   navItems: DashboardNavItem[];
   activeHref: string;
+  showLogout?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -49,6 +52,7 @@ export function DashboardShell({
             ),
           )}
         </nav>
+        {showLogout && <LogoutButton />}
       </aside>
       <div className="md:col-span-3">{children}</div>
     </div>

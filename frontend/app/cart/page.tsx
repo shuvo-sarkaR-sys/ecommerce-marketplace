@@ -29,7 +29,7 @@ export default function CartPage() {
         <p className="mt-3 max-w-sm text-body text-charcoal">
           Everything you add will show up here.
         </p>
-        <LinkButton href="/" variant="primary" size="lg" className="mt-8">
+        <LinkButton href="/" variant="primary" size="lg" className="mt-8 text-white">
           Continue Shopping
         </LinkButton>
       </div>

@@ -39,3 +39,23 @@ export function uploadProductImage(buffer: Buffer): Promise<string> {
     }
   });
 }
+
+export function uploadBrandImage(buffer: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const uploader = getCloudinary().uploader.upload_stream(
+        { folder: "maison/brands", resource_type: "image", transformation: [{ quality: "auto", fetch_format: "auto" }] },
+        (error, result) => {
+          if (error || !result?.secure_url) {
+            reject(new ApiError("Image upload failed", 502));
+            return;
+          }
+          resolve(result.secure_url);
+        },
+      );
+      uploader.end(buffer);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}

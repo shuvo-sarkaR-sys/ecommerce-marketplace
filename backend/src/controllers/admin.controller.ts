@@ -2,12 +2,24 @@ import type { Request, Response } from "express";
 import multer from "multer";
 import * as adminService from "../services/admin.service";
 import { asyncHandler, ok } from "../utils/http";
-import { uploadProductImage } from "../config/cloudinary";
+import { uploadBrandImage, uploadProductImage } from "../config/cloudinary";
 import { updateBrandSchema } from "../validators/catalog.validators";
 
 const productUpload = multer({
   storage: multer.memoryStorage(),
   limits: { files: 6, fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    if (!file.mimetype.startsWith("image/")) {
+      callback(new Error("Only image files are allowed"));
+      return;
+    }
+    callback(null, true);
+  },
+});
+
+const brandUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { files: 1, fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, callback) => {
     if (!file.mimetype.startsWith("image/")) {
       callback(new Error("Only image files are allowed"));
@@ -27,31 +39,52 @@ export const uploadProductImages = [
   }),
 ];
 
+export const uploadBrandImageFile = [
+  brandUpload.single("image"),
+  asyncHandler(async (req: Request, res: Response) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ success: false, error: "Select a brand image" });
+    ok(res, { image: await uploadBrandImage(file.buffer) }, 201);
+  }),
+];
+
 export const overview = asyncHandler(async (_req: Request, res: Response) => {
   ok(res, await adminService.getOverview());
 });
 
 export const updateBrandStatus = asyncHandler(async (req: Request, res: Response) => {
-  ok(res, { brand: await adminService.updateBrandStatus(req.params.id, req.body.status) });
+  const id = req.params.id;
+  if (typeof id !== "string") return res.status(400).json({ success: false, error: "Invalid brand id" });
+  ok(res, { brand: await adminService.updateBrandStatus(id, req.body.status) });
 });
 
 export const updateBrand = asyncHandler(async (req: Request, res: Response) => {
   const input = updateBrandSchema.parse(req.body);
-  ok(res, { brand: await adminService.updateBrand(req.params.id, input) });
+  const id = req.params.id;
+  if (typeof id !== "string") return res.status(400).json({ success: false, error: "Invalid brand id" });
+  ok(res, { brand: await adminService.updateBrand(id, input) });
 });
 
 export const updateProductStatus = asyncHandler(async (req: Request, res: Response) => {
-  ok(res, { product: await adminService.updateProductStatus(req.params.id, req.body.status) });
+  const id = req.params.id;
+  if (typeof id !== "string") return res.status(400).json({ success: false, error: "Invalid product id" });
+  ok(res, { product: await adminService.updateProductStatus(id, req.body.status) });
 });
 
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
-  ok(res, { product: await adminService.updateProduct(req.params.id, req.body) });
+  const id = req.params.id;
+  if (typeof id !== "string") return res.status(400).json({ success: false, error: "Invalid product id" });
+  ok(res, { product: await adminService.updateProduct(id, req.body) });
 });
 
 export const updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
-  ok(res, { order: await adminService.updateOrderStatus(req.params.id, req.body.status) });
+  const id = req.params.id;
+  if (typeof id !== "string") return res.status(400).json({ success: false, error: "Invalid order id" });
+  ok(res, { order: await adminService.updateOrderStatus(id, req.body.status) });
 });
 
 export const resource = asyncHandler(async (req: Request, res: Response) => {
-  ok(res, await adminService.listResource(req.params.resource));
+  const resource = req.params.resource;
+  if (typeof resource !== "string") return res.status(400).json({ success: false, error: "Invalid resource" });
+  ok(res, await adminService.listResource(resource));
 });

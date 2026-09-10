@@ -86,7 +86,7 @@ export function Header() {
           <Link href="/wishlist" aria-label="Wishlist" className="hidden md:block">
             <Heart size={19} />
           </Link>
-          <Link href="/account" aria-label="Account" className="hidden md:block">
+          <Link href="/login" aria-label="Account" className="hidden md:block">
             <User size={19} />
           </Link>
           <Link href="/cart" aria-label="Cart" className="relative">

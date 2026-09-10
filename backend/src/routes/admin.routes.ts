@@ -7,6 +7,7 @@ const router = Router();
 router.use(requireAuth, requireRole("admin"));
 router.get("/overview", adminController.overview);
 router.post("/uploads/products", uploadProductImages);
+router.post("/uploads/brand", adminController.uploadBrandImageFile);
 router.get("/resources/:resource", adminController.resource);
 router.patch("/brands/:id/status", adminController.updateBrandStatus);
 router.patch("/brands/:id", adminController.updateBrand);

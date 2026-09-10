@@ -9,10 +9,15 @@ export async function TrendingBrands() {
   return (
     <section className="bg-paper py-20">
       <div className="container-editorial">
-        <h2 className="mb-8 text-h2">Brands to Watch</h2>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <h2 className="text-h2">Brands to Watch</h2>
+          <Link href="/brands" className="text-caption uppercase tracking-[0.06em] underline underline-offset-4">
+            Explore all brands
+          </Link>
+        </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {brands.map((brand) => (
-            <Link key={brand.slug} href={`/brand/${brand.slug}`} className="group block">
+            <Link key={brand.slug} href={`/shop/new?brand=${encodeURIComponent(brand.slug)}`} className="group block">
               <ImagePlaceholder label={brand.name} aspect="aspect-[4/3]" />
               <div className="mt-4">
                 <h3 className="font-display text-h3">{brand.name}</h3>

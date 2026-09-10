@@ -39,6 +39,15 @@ export function AdminResourcePage({ section }: { section: string }) {
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [catalogOptions, setCatalogOptions] = useState<{ brands: Row[]; categories: Row[] }>({ brands: [], categories: [] });
   const [creatingProduct, setCreatingProduct] = useState(false);
+  const [customBrandName, setCustomBrandName] = useState("");
+  const [customBrandImageFile, setCustomBrandImageFile] = useState<File | null>(null);
+  const [productColors, setProductColors] = useState("");
+  const [productSizes, setProductSizes] = useState("");
+  const [productImageFiles, setProductImageFiles] = useState<File[]>([]);
+  const [productImagePreviews, setProductImagePreviews] = useState<string[]>([]);
+  const [editingProductImages, setEditingProductImages] = useState<string[]>([]);
+  const [editingProductImageFiles, setEditingProductImageFiles] = useState<File[]>([]);
+  const [editingProductImagePreviews, setEditingProductImagePreviews] = useState<string[]>([]);
   const [note, setNote] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,16 +86,27 @@ export function AdminResourcePage({ section }: { section: string }) {
       const uploadForm = new FormData();
       files.forEach((file) => uploadForm.append("images", file));
       const { images } = await apiFetch<{ images: string[] }>("/admin/uploads/products", { method: "POST", body: uploadForm });
+      let customBrandImage: string | undefined;
+      const selectedCustomBrandName = customBrandName.trim();
+      if (selectedCustomBrandName) {
+        if (!customBrandImageFile) throw new ApiRequestError("Add an image for the custom brand", 400);
+        const brandUpload = new FormData();
+        brandUpload.append("image", customBrandImageFile);
+        const uploadedBrand = await apiFetch<{ image: string }>("/admin/uploads/brand", { method: "POST", body: brandUpload });
+        customBrandImage = uploadedBrand.image;
+      }
       await apiFetch("/products", {
         method: "POST",
         body: JSON.stringify({
-          brand: form.get("brand"), category: form.get("category"), name: form.get("name"),
+          brand: form.get("brand") || undefined, customBrandName: selectedCustomBrandName || undefined, customBrandImage,
+          category: form.get("category"), name: form.get("name"),
           description: form.get("description"), sku: form.get("sku"), price: Number(form.get("price")),
           compareAtPrice: form.get("compareAtPrice") ? Number(form.get("compareAtPrice")) : undefined,
-          images, colors: [], sizes: [], tags: [],
+          images, colors: parseList(productColors), sizes: parseSizes(productSizes), tags: [],
         }),
       });
       setShowCreateProduct(false);
+      setProductImageFiles([]);
       await load();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Could not create this product");
@@ -107,14 +127,108 @@ export function AdminResourcePage({ section }: { section: string }) {
     ]).then(([brands, categories]) => setCatalogOptions({ brands: brands.brands, categories: categories.categories }))
       .catch(() => setError("Could not load brands and categories"));
   }, [isProduct]);
+  useEffect(() => {
+    const previews = productImageFiles.map((file) => URL.createObjectURL(file));
+    setProductImagePreviews(previews);
+    return () => previews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [productImageFiles]);
+  useEffect(() => {
+    const previews = editingProductImageFiles.map((file) => URL.createObjectURL(file));
+    setEditingProductImagePreviews(previews);
+    return () => previews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [editingProductImageFiles]);
+  useEffect(() => {
+    if (!isProduct || !showCreateProduct) return;
+    const input = document.querySelector<HTMLInputElement>('input[name="images"]');
+    if (!input) return;
+    const handleChange = () => setProductImageFiles(Array.from(input.files ?? []).slice(0, 6));
+    input.addEventListener("change", handleChange);
+    return () => input.removeEventListener("change", handleChange);
+  }, [isProduct, showCreateProduct]);
+  useEffect(() => {
+    if (!editingProduct) return;
+    setEditingProductImages(Array.isArray(editingProduct.images) ? editingProduct.images.filter((image): image is string => typeof image === "string") : []);
+    setEditingProductImageFiles([]);
+  }, [editingProduct]);
 
+  function selectProductForEditing(product: Row) {
+    setEditingProduct(product);
+    setEditingProductImages(Array.isArray(product.images) ? product.images.filter((image): image is string => typeof image === "string") : []);
+    setEditingProductImageFiles([]);
+  }
+
+  function removeNewImage(index: number) {
+    setProductImageFiles((files) => files.filter((_, fileIndex) => fileIndex !== index));
+  }
+
+  function moveNewImage(index: number, direction: -1 | 1) {
+    setProductImageFiles((files) => moveItem(files, index, direction));
+  }
+
+  async function saveProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCreatingProduct(true);
+    setError(null);
+    try {
+      const form = new FormData(event.currentTarget);
+      const uploadForm = new FormData();
+      editingProductImageFiles.forEach((file) => uploadForm.append("images", file));
+      const uploaded = editingProductImageFiles.length > 0
+        ? await apiFetch<{ images: string[] }>("/admin/uploads/products", { method: "POST", body: uploadForm })
+        : { images: [] };
+      await update(`/admin/products/${String(editingProduct?._id)}`, {
+        brand: form.get("brand"), category: form.get("category"), name: form.get("name"), sku: form.get("sku"),
+        description: form.get("description"), price: Number(form.get("price")),
+        compareAtPrice: form.get("compareAtPrice") ? Number(form.get("compareAtPrice")) : null,
+        colors: parseList(form.get("colors")), sizes: parseSizes(form.get("sizes")), material: form.get("material"),
+        tags: parseList(form.get("tags")), badges: parseList(form.get("badges")),
+        images: [...editingProductImages, ...uploaded.images],
+      });
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Could not update this product");
+    } finally { setCreatingProduct(false); }
+  }
   return <div>
     <div className="mb-6 flex items-center justify-between gap-4"><div><p className="label-caps">MAISON Control Panel</p><h2 className="mt-1 font-display text-h2">{titles[section] ?? section}</h2></div><div className="flex gap-2">{isProduct && <Button size="sm" onClick={() => setShowCreateProduct((value) => !value)}>{showCreateProduct ? "Close" : "Add product"}</Button>}<Button size="sm" variant="secondary" onClick={() => void load()} disabled={loading}>Refresh</Button></div></div>
     {error && <p className="mb-4 text-caption text-oxblood">{error}</p>}
     {note && <p className="mb-4 border border-sand p-4 text-body text-charcoal">{note}</p>}
-    {isProduct && showCreateProduct && <form className="mb-6 grid gap-4 border border-sand p-5" onSubmit={(event) => void createProduct(event)}><div className="flex items-center justify-between"><h3 className="font-display text-h3">Add product</h3><span className="text-caption text-stone">Images are required</span></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Brand<select name="brand" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required><option value="">Select brand</option>{catalogOptions.brands.map((brand) => <option key={String(brand._id)} value={String(brand._id)}>{text(brand.name)}</option>)}</select></label><label className="label-caps">Category<select name="category" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required><option value="">Select category</option>{catalogOptions.categories.map((category) => <option key={String(category._id)} value={String(category._id)}>{text(category.name)}</option>)}</select></label></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Name<input name="name" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">SKU<input name="sku" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label></div><label className="label-caps">Description<textarea name="description" className="mt-1 min-h-24 w-full border border-stone/40 bg-paper p-3.5 text-body" minLength={20} required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Price<input name="price" type="number" min="1" step="0.01" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">Compare-at price<input name="compareAtPrice" type="number" min="1" step="0.01" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" /></label></div><label className="label-caps">Product images<input name="images" type="file" accept="image/*" multiple className="mt-1 block w-full text-body" required /></label><Button type="submit" size="sm" disabled={creatingProduct}>{creatingProduct ? "Uploading..." : "Create product"}</Button></form>}
-    {isProduct && editingProduct && <form className="mb-6 grid gap-4 border border-sand p-5" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); void update(`/admin/products/${String(editingProduct._id)}`, { name: form.get("name"), description: form.get("description"), price: Number(form.get("price")), compareAtPrice: form.get("compareAtPrice") ? Number(form.get("compareAtPrice")) : null }); }}><div className="flex items-center justify-between"><h3 className="font-display text-h3">Edit product</h3><Button type="button" size="sm" variant="ghost" onClick={() => setEditingProduct(null)}>Cancel</Button></div><label className="label-caps">Name<input name="name" defaultValue={text(editingProduct.name)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">Description<textarea name="description" defaultValue={text(editingProduct.description)} className="mt-1 min-h-24 w-full border border-stone/40 bg-paper p-3.5 text-body" required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Price<input name="price" type="number" min="1" defaultValue={String(editingProduct.price ?? "")} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">Compare-at price<input name="compareAtPrice" type="number" min="1" defaultValue={editingProduct.compareAtPrice ? String(editingProduct.compareAtPrice) : ""} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" /></label></div><Button type="submit" size="sm">Save product</Button></form>}
+    {isProduct && showCreateProduct && productImagePreviews.length > 0 && <div className="mb-4 grid grid-cols-2 gap-3 border border-sand p-4 sm:grid-cols-4">{productImagePreviews.map((preview, index) => <div key={preview} className="relative overflow-hidden border border-sand bg-sand/20"><img src={preview} alt={`Product preview ${index + 1}`} className="aspect-square w-full object-cover" /><p className="truncate px-2 py-1 text-caption text-stone">{productImageFiles[index]?.name}</p><div className="flex gap-1 p-2"><button type="button" className="border border-sand px-2 py-1 text-caption" onClick={() => moveNewImage(index, -1)} disabled={index === 0}>Left</button><button type="button" className="border border-sand px-2 py-1 text-caption" onClick={() => moveNewImage(index, 1)} disabled={index === productImageFiles.length - 1}>Right</button><button type="button" className="border border-sand px-2 py-1 text-caption" onClick={() => removeNewImage(index)}>Remove</button></div></div>)}</div>}
+    {isProduct && showCreateProduct && <form className="mb-6 grid gap-4 border border-sand p-5" onSubmit={(event) => void createProduct(event)}><div className="flex items-center justify-between"><h3 className="font-display text-h3">Add product</h3><span className="text-caption text-stone">Images are required</span></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Custom brand name<input value={customBrandName} onChange={(event) => setCustomBrandName(event.target.value)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="Optional if selecting an existing brand" /></label><label className="label-caps">Brand image<input type="file" accept="image/*" onChange={(event) => setCustomBrandImageFile(event.target.files?.[0] ?? null)} className="mt-1 block w-full text-body" /></label><label className="label-caps">Colors<input value={productColors} onChange={(event) => setProductColors(event.target.value)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="Black, Ivory, Navy" /></label><label className="label-caps">Sizes and stock<input value={productSizes} onChange={(event) => setProductSizes(event.target.value)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="S:10, M:15, L:8" /></label></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Brand<select name="brand" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body"><option value="">Select brand</option>{catalogOptions.brands.map((brand) => <option key={String(brand._id)} value={String(brand._id)}>{text(brand.name)}</option>)}</select></label><label className="label-caps">Category<select name="category" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required><option value="">Select category</option>{catalogOptions.categories.map((category) => <option key={String(category._id)} value={String(category._id)}>{text(category.name)}</option>)}</select></label></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Name<input name="name" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">SKU<input name="sku" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label></div><label className="label-caps">Description<textarea name="description" className="mt-1 min-h-24 w-full border border-stone/40 bg-paper p-3.5 text-body" minLength={20} required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Price<input name="price" type="number" min="1" step="0.01" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">Compare-at price<input name="compareAtPrice" type="number" min="1" step="0.01" className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" /></label></div><label className="label-caps">Product images<input name="images" type="file" accept="image/*" multiple className="mt-1 block w-full text-body" required /></label><Button type="submit" size="sm" disabled={creatingProduct}>{creatingProduct ? "Uploading..." : "Create product"}</Button></form>}
+    {isProduct && editingProduct && <form className="mb-6 grid gap-4 border border-sand p-5" onSubmit={(event) => void saveProduct(event)}><div className="flex items-center justify-between"><h3 className="font-display text-h3">Edit product</h3><Button type="button" size="sm" variant="ghost" onClick={() => setEditingProduct(null)}>Cancel</Button></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Brand<select name="brand" defaultValue={text(editingProduct.brand) === "-" ? "" : String((editingProduct.brand as Row)?._id ?? editingProduct.brand)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required><option value="">Select brand</option>{catalogOptions.brands.map((brand) => <option key={String(brand._id)} value={String(brand._id)}>{text(brand.name)}</option>)}</select></label><label className="label-caps">Category<select name="category" defaultValue={text(editingProduct.category) === "-" ? "" : String((editingProduct.category as Row)?._id ?? editingProduct.category)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required><option value="">Select category</option>{catalogOptions.categories.map((category) => <option key={String(category._id)} value={String(category._id)}>{text(category.name)}</option>)}</select></label></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Name<input name="name" defaultValue={text(editingProduct.name)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">SKU<input name="sku" defaultValue={text(editingProduct.sku)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" minLength={3} required /></label></div><label className="label-caps">Description<textarea name="description" defaultValue={text(editingProduct.description)} className="mt-1 min-h-24 w-full border border-stone/40 bg-paper p-3.5 text-body" required /></label><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Price<input name="price" type="number" min="1" defaultValue={String(editingProduct.price ?? "")} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><label className="label-caps">Compare-at price<input name="compareAtPrice" type="number" min="1" defaultValue={editingProduct.compareAtPrice ? String(editingProduct.compareAtPrice) : ""} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" /></label></div><div className="grid gap-4 sm:grid-cols-2"><label className="label-caps">Colors<input name="colors" defaultValue={listValue(editingProduct.colors)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="Black, Ivory, Navy" /></label><label className="label-caps">Sizes and stock<input name="sizes" defaultValue={sizesValue(editingProduct.sizes)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="S:10, M:15" /></label><label className="label-caps">Material<input name="material" defaultValue={text(editingProduct.material) === "-" ? "" : text(editingProduct.material)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" /></label><label className="label-caps">Tags<input name="tags" defaultValue={listValue(editingProduct.tags)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="new, featured" /></label><label className="label-caps sm:col-span-2">Badges<input name="badges" defaultValue={listValue(editingProduct.badges)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" placeholder="new, bestseller, limited, sale" /></label></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{editingProductImages.map((image, index) => <div key={image} className="relative overflow-hidden border border-sand"><img src={image} alt={`Product image ${index + 1}`} className="aspect-square w-full object-cover" /><button type="button" className="absolute right-1 top-1 bg-paper px-2 py-1 text-caption" onClick={() => setEditingProductImages((images) => images.filter((_, imageIndex) => imageIndex !== index))}>Remove</button></div>)}{editingProductImagePreviews.map((image, index) => <div key={image} className="relative overflow-hidden border border-sand"><img src={image} alt={`New product image ${index + 1}`} className="aspect-square w-full object-cover" /><button type="button" className="absolute right-1 top-1 bg-paper px-2 py-1 text-caption" onClick={() => setEditingProductImageFiles((files) => files.filter((_, fileIndex) => fileIndex !== index))}>Remove</button></div>)}</div><label className="label-caps">Add product images<input type="file" accept="image/*" multiple onChange={(event) => setEditingProductImageFiles(Array.from(event.target.files ?? []).slice(0, 6 - editingProductImages.length))} className="mt-1 block w-full text-body" /></label><Button type="submit" size="sm" disabled={creatingProduct || editingProductImages.length + editingProductImageFiles.length === 0}>{creatingProduct ? "Uploading..." : "Save product"}</Button></form>}
     {isBrand && editingBrand && <form className="mb-6 grid gap-4 border border-sand p-5" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); void update(`/admin/brands/${String(editingBrand._id)}`, { name: form.get("name"), description: form.get("description"), category: form.get("category") }); }}><div className="flex items-center justify-between"><h3 className="font-display text-h3">Edit brand</h3><Button type="button" size="sm" variant="ghost" onClick={() => setEditingBrand(null)}>Cancel</Button></div><label className="label-caps">Name<input name="name" defaultValue={text(editingBrand.name)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" minLength={2} maxLength={80} required /></label><label className="label-caps">Description<textarea name="description" defaultValue={text(editingBrand.description)} className="mt-1 min-h-24 w-full border border-stone/40 bg-paper p-3.5 text-body" minLength={20} required /></label><label className="label-caps">Category<input name="category" defaultValue={text(editingBrand.category)} className="mt-1 h-11 w-full border border-stone/40 bg-paper px-3.5 text-body" required /></label><Button type="submit" size="sm">Save brand</Button></form>}
-    {loading ? <p className="text-body text-stone">Loading…</p> : rows.length === 0 ? <div className="border-y border-sand py-10 text-center text-body text-stone">Nothing to show yet.</div> : <div className="overflow-x-auto border-y border-sand"><table className="w-full min-w-[720px] text-left text-caption"><thead><tr className="border-b border-sand text-stone">{columns.map((column) => <th key={column} className="py-3 pr-5 capitalize">{column.replace(/([A-Z])/g, " $1")}</th>)}{(isProduct || isOrder || isBrand) && <th className="py-3 pr-5">Actions</th>}</tr></thead><tbody>{rows.map((row) => <tr key={String(row._id)} className="border-b border-sand last:border-0">{columns.map((column) => <td key={column} className="max-w-[240px] truncate py-3 pr-5">{column === "price" || column === "total" ? formatBDT(Number(row[column] ?? 0)) : column.endsWith("At") ? new Date(String(row[column])).toLocaleDateString() : text(row[column])}</td>)}{isProduct && <td className="py-3 pr-5"><div className="flex items-center gap-2"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/products/${String(row._id)}/status`, { status: event.target.value })}><option value="draft">Draft</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><Button size="sm" variant="secondary" onClick={() => setEditingProduct(row)}>Edit</Button></div></td>}{isBrand && <td className="py-3 pr-5"><div className="flex items-center gap-2"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/brands/${String(row._id)}/status`, { status: event.target.value })}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="suspended">Suspended</option></select><Button size="sm" variant="secondary" onClick={() => setEditingBrand(row)}>Edit</Button></div></td>}{isOrder && <td className="py-3 pr-5"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/orders/${String(row._id)}/status`, { status: event.target.value })}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option><option value="returned">Returned</option></select></td>}</tr>)}</tbody></table></div>}
+    {loading ? <p className="text-body text-stone">Loading…</p> : rows.length === 0 ? <div className="border-y border-sand py-10 text-center text-body text-stone">Nothing to show yet.</div> : <div className="overflow-x-auto border-y border-sand"><table className="w-full min-w-[720px] text-left text-caption"><thead><tr className="border-b border-sand text-stone">{columns.map((column) => <th key={column} className="py-3 pr-5 capitalize">{column.replace(/([A-Z])/g, " $1")}</th>)}{(isProduct || isOrder || isBrand) && <th className="py-3 pr-5">Actions</th>}</tr></thead><tbody>{rows.map((row) => <tr key={String(row._id)} className="border-b border-sand last:border-0">{columns.map((column) => <td key={column} className="max-w-[240px] truncate py-3 pr-5">{column === "price" || column === "total" ? formatBDT(Number(row[column] ?? 0)) : column.endsWith("At") ? new Date(String(row[column])).toLocaleDateString() : text(row[column])}</td>)}{isProduct && <td className="py-3 pr-5"><div className="flex items-center gap-2"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/products/${String(row._id)}/status`, { status: event.target.value })}><option value="draft">Draft</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><Button size="sm" variant="secondary" onClick={() => selectProductForEditing(row)}>Edit</Button></div></td>}{isBrand && <td className="py-3 pr-5"><div className="flex items-center gap-2"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/brands/${String(row._id)}/status`, { status: event.target.value })}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="suspended">Suspended</option></select><Button size="sm" variant="secondary" onClick={() => setEditingBrand(row)}>Edit</Button></div></td>}{isOrder && <td className="py-3 pr-5"><select className="border border-sand bg-transparent px-2 py-1" value={String(row.status ?? "pending")} onChange={(event) => void update(`/admin/orders/${String(row._id)}/status`, { status: event.target.value })}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option><option value="returned">Returned</option></select></td>}</tr>)}</tbody></table></div>}
   </div>;
+}
+
+function parseList(value: FormDataEntryValue | string | null) {
+  return String(value ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function listValue(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string").join(", ") : "";
+}
+
+function sizesValue(value: unknown) {
+  return Array.isArray(value) ? value.map((item) => {
+    if (!item || typeof item !== "object") return "";
+    const size = item as { size?: unknown; stock?: unknown };
+    return typeof size.size === "string" ? `${size.size}:${typeof size.stock === "number" ? size.stock : 0}` : "";
+  }).filter(Boolean).join(", ") : "";
+}
+
+function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= items.length) return items;
+  const nextItems = [...items];
+  const [item] = nextItems.splice(index, 1);
+  if (item === undefined) return items;
+  nextItems.splice(targetIndex, 0, item);
+  return nextItems;
+}
+
+function parseSizes(value: FormDataEntryValue | string | null) {
+  return String(value ?? "").split(",").map((item) => item.trim()).filter(Boolean).map((item) => {
+    const [size, stock = "0"] = item.split(":");
+    return { size: (size ?? "").trim(), stock: Number(stock.trim()) || 0 };
+  }).filter((item) => item.size);
 }

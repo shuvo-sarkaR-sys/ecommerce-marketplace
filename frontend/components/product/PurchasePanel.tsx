@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Price } from "@/components/ui/Price";
 import { useCartStore } from "@/lib/store/cart";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 
 interface SizeStock {
   size: string;
@@ -41,9 +42,28 @@ export function PurchasePanel({
   const [wishlisted, setWishlisted] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
+  useEffect(() => {
+    apiFetch<{ wishlist: { product?: { slug: string } }[] }>("/account/wishlist")
+      .then(({ wishlist }) => setWishlisted(wishlist.some((item) => item.product?.slug === slug)))
+      .catch(() => setWishlisted(false));
+  }, [slug]);
+
   const needsSize = sizes.length > 0;
   const selectedStock = sizes.find((s) => s.size === size)?.stock ?? null;
   const canAdd = !needsSize || (Boolean(size) && (selectedStock ?? 0) > 0);
+
+  async function toggleWishlist() {
+    try {
+      if (wishlisted) {
+        await apiFetch(`/account/wishlist/${slug}`, { method: "DELETE" });
+      } else {
+        await apiFetch(`/account/wishlist/${slug}`, { method: "POST" });
+      }
+      setWishlisted((value) => !value);
+    } catch {
+      router.push(`/login?next=${encodeURIComponent(`/product/${slug}`)}`);
+    }
+  }
 
   function addToBag() {
     if (!canAdd) return;
@@ -156,7 +176,7 @@ export function PurchasePanel({
         </Button>
         <button
           type="button"
-          onClick={() => setWishlisted((w) => !w)}
+          onClick={toggleWishlist}
           className="flex items-center justify-center gap-2 py-2 text-caption uppercase tracking-[0.06em] text-charcoal"
           aria-pressed={wishlisted}
         >

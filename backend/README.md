@@ -32,7 +32,13 @@ Fill in `.env`:
 - **MONGODB_URI** — free-tier cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
 - **JWT_ACCESS_SECRET** / **JWT_REFRESH_SECRET** — two different long random strings (`openssl rand -base64 48`)
 - **FRONTEND_URL** — where the Next.js app runs (`http://localhost:3000` in dev); required for CORS
+- **BACKEND_URL** — public backend URL used for OAuth callbacks (`http://localhost:5000` in dev)
+- **GOOGLE_CLIENT_ID** / **GOOGLE_CLIENT_SECRET** — OAuth 2.0 Web application credentials from the [Google Cloud Console](https://console.cloud.google.com/)
 - **CLOUDINARY_CLOUD_NAME**, **CLOUDINARY_API_KEY**, **CLOUDINARY_API_SECRET** — required for product image uploads
+
+For Google sign-in, add `http://localhost:5000/api/auth/google/callback` as an
+authorized redirect URI in the Google OAuth client. In production, replace it
+with the deployed `BACKEND_URL` callback URL.
 
 ```bash
 npm run clear-data   # only with CONFIRM_CLEAR_DATA=YES; deletes every collection
@@ -51,6 +57,8 @@ returns `{ status: "ok" }` for uptime checks.
 | `/api/auth/register` | POST | — | Sets access + refresh cookies |
 | `/api/auth/admin/register` | POST | setup key | Creates an admin account when `ADMIN_SETUP_KEY` matches |
 | `/api/auth/login` | POST | — | Sets access + refresh cookies |
+| `/api/auth/google` | GET | — | Starts Google OAuth sign-in |
+| `/api/auth/google/callback` | GET | — | Completes Google OAuth sign-in |
 | `/api/auth/logout` | POST | — | Clears cookies |
 | `/api/auth/refresh` | POST | refresh cookie | Rotates both tokens |
 | `/api/auth/me` | GET | access cookie | Current user |

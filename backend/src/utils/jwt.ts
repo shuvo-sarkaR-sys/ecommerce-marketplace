@@ -11,8 +11,8 @@ export interface RefreshTokenPayload {
   tokenVersion: number;
 }
 
-const ACCESS_TOKEN_TTL = "15m";
-const REFRESH_TOKEN_TTL = "30d";
+const ACCESS_TOKEN_TTL = "15d";
+const REFRESH_TOKEN_TTL = "15d";
 
 function getSecrets() {
   const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
@@ -70,7 +70,7 @@ export function accessCookieOptions() {
     secure: isProd,
     sameSite: (isProd ? "none" : "lax") as "none" | "lax",
     path: "/",
-    maxAge: 1000 * 60 * 15,
+    maxAge: 1000 * 60 * 60 * 24 * 15,
   };
 }
 
@@ -80,6 +80,6 @@ export function refreshCookieOptions() {
     secure: isProd,
     sameSite: (isProd ? "none" : "lax") as "none" | "lax",
     path: "/api/auth",
-    maxAge: 1000 * 60 * 60 * 24 * 30,
+    maxAge: 1000 * 60 * 60 * 24 * 15,
   };
 }

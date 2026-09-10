@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const roleGuardedPrefixes: { prefix: string; roles: string[] }[] = [
   { prefix: "/account", roles: ["customer", "seller", "admin"] },
+  { prefix: "/checkout", roles: ["customer", "seller", "admin"] },
   { prefix: "/seller", roles: ["seller", "admin"] },
   { prefix: "/admin", roles: ["admin"] },
 ];
@@ -14,12 +15,32 @@ export async function middleware(req: NextRequest) {
   }
   if (req.nextUrl.pathname === "/seller/login") return NextResponse.next();
 
+  if (req.nextUrl.pathname === "/login") {
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/me`, { headers: { cookie: cookieHeader } });
+        if (res.ok) return NextResponse.redirect(new URL("/account", req.url));
+      } catch {
+        // Let the login form render when the backend cannot confirm the session.
+      }
+    }
+    return NextResponse.next();
+  }
+
   const match = roleGuardedPrefixes.find((r) => req.nextUrl.pathname.startsWith(r.prefix));
   if (!match) return NextResponse.next();
 
   const cookieHeader = req.headers.get("cookie");
   if (!cookieHeader) {
-    const loginPath = match.prefix === "/admin" ? "/admin/login" : "/seller/login";
+    const loginPath =
+      match.prefix === "/admin"
+        ? "/admin/login"
+        : match.prefix === "/checkout"
+          ? "/login"
+          : match.prefix === "/seller"
+            ? "/seller/login"
+            : "/login";
     return NextResponse.redirect(new URL(`${loginPath}?next=${req.nextUrl.pathname}`, req.url));
   }
 
@@ -34,7 +55,14 @@ export async function middleware(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const loginPath = match.prefix === "/admin" ? "/admin/login" : "/seller/login";
+      const loginPath =
+        match.prefix === "/admin"
+          ? "/admin/login"
+          : match.prefix === "/checkout"
+            ? "/login"
+            : match.prefix === "/seller"
+              ? "/seller/login"
+              : "/login";
       return NextResponse.redirect(new URL(`${loginPath}?next=${req.nextUrl.pathname}`, req.url));
     }
 
@@ -47,10 +75,18 @@ export async function middleware(req: NextRequest) {
   } catch {
     // Backend unreachable -- fail closed rather than let a protected page
     // through unauthenticated.
-    return NextResponse.redirect(new URL(`/seller/login?next=${req.nextUrl.pathname}`, req.url));
+    const fallbackLogin =
+      req.nextUrl.pathname.startsWith("/admin")
+        ? "/admin/login"
+        : req.nextUrl.pathname.startsWith("/checkout")
+          ? "/login"
+          : req.nextUrl.pathname.startsWith("/seller")
+            ? "/seller/login"
+            : "/login";
+    return NextResponse.redirect(new URL(`${fallbackLogin}?next=${req.nextUrl.pathname}`, req.url));
   }
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/seller/:path*", "/admin/:path*"],
+  matcher: ["/login", "/account/:path*", "/checkout", "/seller/:path*", "/admin/:path*"],
 };

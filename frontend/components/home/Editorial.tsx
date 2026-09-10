@@ -1,12 +1,14 @@
+import Image from "next/image";
 import { LinkButton } from "@/components/ui/Button";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
+import editorialImage from "@/aseets/editorial.png";
 
 export function Editorial() {
   return (
     <section className="container-editorial py-24">
       <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-12">
         <div className="md:col-span-7">
-          <ImagePlaceholder label="The Modern Generation" aspect="aspect-[4/3]" />
+          <Image src={editorialImage} alt="The Modern Generation" className="aspect-[4/3] object-right object-cover" />
         </div>
         <div className="md:col-span-5 md:pl-8">
           <p className="label-caps mb-4">Editorial</p>

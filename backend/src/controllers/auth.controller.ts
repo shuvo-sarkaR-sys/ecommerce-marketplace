@@ -98,10 +98,10 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
 
   const { accessToken, refreshToken } = await authService.loginWithGoogle({
     email: profile.email,
-    name: profile.name ?? profile.email.split("@")[0],
+    name: profile.name ?? profile.email.split("@")[0] ?? profile.email,
   });
   setAuthCookies(res, accessToken, refreshToken);
-  return res.redirect(`${frontendUrl()}${next}`);
+  return res.redirect(`${frontendUrl()}${next === "/" ? "/account" : next}`);
 });
 
 export const register = asyncHandler(async (req: Request, res: Response) => {

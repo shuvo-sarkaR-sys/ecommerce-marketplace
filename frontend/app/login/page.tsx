@@ -14,6 +14,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
+  const googleError = searchParams.get("error");
 
   const {
     register,
@@ -25,7 +26,7 @@ function LoginForm() {
     setFormError(null);
     try {
       await apiFetch("/auth/login", { method: "POST", body: JSON.stringify(values) });
-      router.push(searchParams.get("next") ?? "/");
+      router.push(searchParams.get("next") ?? "/account");
       router.refresh();
     } catch (err) {
       setFormError(err instanceof ApiRequestError ? err.message : "Something went wrong");
@@ -38,12 +39,21 @@ function LoginForm() {
       <p className="mt-2 text-body text-charcoal">Welcome back to MAISON.</p>
 
       <a
-        href={`/api/auth/google?next=${encodeURIComponent(searchParams.get("next") ?? "/")}`}
+        href={`/api/auth/google?next=${encodeURIComponent(searchParams.get("next") ?? "/account")}`}
+        aria-label="Continue with Google"
         className="mt-8 flex h-14 items-center justify-center border border-ink text-body font-medium transition-colors hover:bg-sand/60"
       >
         <span className="mr-3 text-lg font-semibold">G</span>
         Continue with Google
       </a>
+
+      {googleError && (
+        <p className="mt-3 text-caption text-oxblood">
+          {googleError === "google_not_configured"
+            ? "Google sign-in is not configured yet."
+            : "Google sign-in could not be completed. Please try again."}
+        </p>
+      )}
 
       <div className="my-6 flex items-center gap-3 text-caption text-stone">
         <span className="h-px flex-1 bg-sand" />

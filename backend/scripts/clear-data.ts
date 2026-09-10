@@ -9,8 +9,10 @@ if (process.env.CONFIRM_CLEAR_DATA !== "YES") {
   throw new Error("Refusing to clear the database. Set CONFIRM_CLEAR_DATA=YES to confirm this destructive operation.");
 }
 
+const mongoUri = MONGODB_URI;
+
 async function clearData() {
-  await mongoose.connect(MONGODB_URI);
+  await mongoose.connect(mongoUri);
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
   console.log("Database cleared.");

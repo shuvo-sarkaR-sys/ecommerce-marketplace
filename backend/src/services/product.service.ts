@@ -101,7 +101,18 @@ export async function createProduct(
   role: string,
   input: z.infer<typeof createProductSchema>,
 ) {
-  const brand = await Brand.findById(input.brand);
+  let brand = input.brand ? await Brand.findById(input.brand) : null;
+  if (!brand && input.customBrandName && role === "admin") {
+    brand = await Brand.create({
+      owner: sellerId,
+      name: input.customBrandName,
+      slug: `${slugify(input.customBrandName)}-${Math.random().toString(36).slice(2, 7)}`,
+      description: `The ${input.customBrandName} brand.`,
+      logo: input.customBrandImage,
+      category: "Fashion",
+      status: "approved",
+    });
+  }
   if (!brand) throw new ApiError("Brand not found", 404);
   if (brand.owner.toString() !== sellerId && role !== "admin") {
     throw new ApiError("You can only add products to your own brand", 403);
