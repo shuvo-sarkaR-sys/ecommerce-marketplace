@@ -118,7 +118,11 @@ export async function createCheckoutOrder(userId: string, input: CheckoutInput) 
 
   const productsBySlug = Object.fromEntries(
     products.map((product) => {
-      const brand = product.brand as { _id?: string; commissionRate?: number } | undefined;
+      const brand =
+        typeof product.brand === "object" && product.brand !== null && "commissionRate" in product.brand
+          ? (product.brand as unknown as { commissionRate?: number })
+          : undefined;
+
       return [
         product.slug,
         {

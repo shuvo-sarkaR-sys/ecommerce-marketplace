@@ -28,6 +28,7 @@ test("buildCheckoutPayload calculates totals and seller payouts from cart items"
   const payload = buildCheckoutPayload(items, {
     "ivory-overshirt": {
       _id: "64f000000000000000000001",
+      slug: "ivory-overshirt",
       seller: "64f000000000000000000010",
       brand: "64f000000000000000000020",
       price: 2500,
@@ -38,6 +39,7 @@ test("buildCheckoutPayload calculates totals and seller payouts from cart items"
     },
     "slim-tapered-trouser": {
       _id: "64f000000000000000000002",
+      slug: "slim-tapered-trouser",
       seller: "64f000000000000000000011",
       brand: "64f000000000000000000021",
       price: 3200,
@@ -48,10 +50,15 @@ test("buildCheckoutPayload calculates totals and seller payouts from cart items"
     },
   });
 
+  const firstItem = payload.items[0];
+  const secondItem = payload.items[1];
+
+  assert.ok(firstItem);
+  assert.ok(secondItem);
   assert.equal(payload.subtotal, 8200);
   assert.equal(payload.shippingFee, 0);
   assert.equal(payload.total, 8200);
   assert.equal(payload.items.length, 2);
-  assert.equal(payload.items[0].sellerPayout, 2125);
-  assert.equal(payload.items[1].sellerPayout, 2720);
+  assert.equal(firstItem.sellerPayout, 2125);
+  assert.equal(secondItem.sellerPayout, 2720);
 });
