@@ -1,0 +1,3 @@
+export default function ShippingPage() {
+  return <main className="container-editorial max-w-3xl py-12 md:py-16"><p className="label-caps">Delivery information</p><h1 className="mt-2 font-display text-h1">Shipping &amp; returns</h1><div className="mt-10 space-y-8 text-body text-charcoal"><section><h2 className="font-display text-h3 text-ink">Shipping</h2><p className="mt-3">Orders are carefully packed and dispatched from Dhaka. Delivery estimates and charges are shown at checkout.</p></section><section><h2 className="font-display text-h3 text-ink">Returns</h2><p className="mt-3">Contact customer care within 7 days of delivery to request a return. Items must be unworn and returned with their original tags and packaging.</p></section></div></main>;
+}

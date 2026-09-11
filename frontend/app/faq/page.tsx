@@ -1,0 +1,5 @@
+const questions = [["How do I place an order?", "Add your pieces to the bag, continue to checkout, and review your order before placing it."], ["Can I change or cancel an order?", "Contact customer care as soon as possible. We will help before the order is dispatched."], ["How can I track my order?", "Tracking details are shared after your order has been dispatched."], ["Are all items authentic?", "Yes. MAISON works directly with the independent brands represented on the marketplace."]];
+
+export default function FaqPage() {
+  return <main className="container-editorial max-w-3xl py-12 md:py-16"><p className="label-caps">Need to know</p><h1 className="mt-2 font-display text-h1">Frequently asked questions</h1><div className="mt-10 divide-y divide-sand border-y border-sand">{questions.map(([question, answer]) => <details key={question} className="py-6"><summary className="cursor-pointer list-none font-display text-h3">{question}</summary><p className="mt-3 text-body text-charcoal">{answer}</p></details>)}</div></main>;
+}

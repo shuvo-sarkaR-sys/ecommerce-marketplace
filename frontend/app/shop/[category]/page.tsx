@@ -11,6 +11,7 @@ const categoryNames: Record<string, string> = {
   shoe: "Shoe",
   bags: "Bags",
   beauty: "Beauty",
+  all: "All pieces",
   new: "New Arrivals",
   sale: "Sale",
 };
@@ -44,7 +45,7 @@ export default async function ShopCategoryPage({
   if (!title) notFound();
 
   const query = new URLSearchParams({ limit: "48", sort: category === "new" ? "newest" : "featured" });
-  if (!["new", "sale"].includes(category)) {
+  if (!["new", "sale", "all"].includes(category)) {
     query.set("category", backendCategorySlugs[category] ?? category);
   }
   if (category === "sale") query.set("badge", "sale");

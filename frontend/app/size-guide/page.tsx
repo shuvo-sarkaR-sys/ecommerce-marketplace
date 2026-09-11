@@ -1,0 +1,5 @@
+const rows = [["XS", "32-34", "26-28", "34-36"], ["S", "34-36", "28-30", "36-38"], ["M", "36-38", "30-32", "38-40"], ["L", "38-40", "32-34", "40-42"], ["XL", "40-42", "34-36", "42-44"]];
+
+export default function SizeGuidePage() {
+  return <main className="container-editorial max-w-4xl py-12 md:py-16"><p className="label-caps">Find your fit</p><h1 className="mt-2 font-display text-h1">Size guide</h1><div className="mt-10 overflow-x-auto border-y border-sand"><table className="w-full min-w-[520px] text-left text-body"><thead><tr className="border-b border-sand text-caption uppercase tracking-[0.08em]"><th className="px-4 py-4">Size</th><th className="px-4 py-4">Bust (in)</th><th className="px-4 py-4">Waist (in)</th><th className="px-4 py-4">Hip (in)</th></tr></thead><tbody>{rows.map((row) => <tr key={row[0]} className="border-b border-sand last:border-0">{row.map((value) => <td key={value} className="px-4 py-4 text-charcoal">{value}</td>)}</tr>)}</tbody></table></div><p className="mt-6 text-caption text-stone">Measurements are a guide. Check each product description for fit notes.</p></main>;
+}

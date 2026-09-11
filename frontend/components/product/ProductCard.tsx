@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Price } from "@/components/ui/Price";
 import { ImagePlaceholder } from "@/components/ui/ImagePlaceholder";
 import { useCartStore } from "@/lib/store/cart";
+import { apiFetch } from "@/lib/api-client";
 import type { ProductBadge } from "@/types/product";
 
 export interface ProductCardData {
@@ -36,9 +37,31 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const badges = product.badges ?? [];
   const imageSrc = isUsableImageUrl(product.images?.[0]) ? product.images[0] : null;
   const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    apiFetch<{ wishlist: { product?: { slug: string } }[] }>("/account/wishlist")
+      .then(({ wishlist }) => setWishlisted(wishlist.some((item) => item.product?.slug === product.slug)))
+      .catch(() => setWishlisted(false));
+  }, [product.slug]);
+
+  async function toggleWishlist() {
+    if (wishlistBusy) return;
+    setWishlistBusy(true);
+    try {
+      if (wishlisted) {
+        await apiFetch(`/account/wishlist/${product.slug}`, { method: "DELETE" });
+      } else {
+        await apiFetch(`/account/wishlist/${product.slug}`, { method: "POST" });
+      }
+      setWishlisted((value) => !value);
+    } finally {
+      setWishlistBusy(false);
+    }
+  }
 
   return (
     <div
@@ -76,8 +99,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            setWishlisted((w) => !w);
+            void toggleWishlist();
           }}
+          disabled={wishlistBusy}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={wishlisted}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center bg-paper/90 text-ink transition-transform duration-200 hover:scale-110"

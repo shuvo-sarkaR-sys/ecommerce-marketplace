@@ -48,9 +48,9 @@ function AdminLoginForm() {
           {isSubmitting ? "Signing In…" : "Sign In as Admin"}
         </Button>
       </form>
-      <p className="mt-6 text-caption text-charcoal">
+      {/* <p className="mt-6 text-caption text-charcoal">
         Need the first admin account? <Link href="/admin/register" className="underline">Create one</Link>
-      </p>
+      </p> */}
     </div>
   );
 }

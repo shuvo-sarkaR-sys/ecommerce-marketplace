@@ -1,0 +1,3 @@
+export default function ContactPage() {
+  return <main className="container-editorial max-w-3xl py-12 md:py-16"><p className="label-caps">We&apos;re here to help</p><h1 className="mt-2 font-display text-h1">Contact MAISON</h1><div className="mt-10 grid gap-8 border-y border-sand py-8 md:grid-cols-2"><div><p className="label-caps">Customer care</p><a className="mt-2 block text-body underline" href="mailto:hello@maison.example">hello@maison.example</a></div><div><p className="label-caps">Response time</p><p className="mt-2 text-body text-charcoal">Sunday to Thursday, 10:00-18:00 BST</p></div></div></main>;
+}

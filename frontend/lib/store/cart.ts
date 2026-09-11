@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { apiFetch } from "@/lib/api-client";
 
 export interface CartItem {
   slug: string;
@@ -50,28 +51,66 @@ export const useCartStore = create<CartState>()((set) => ({
       ownerId: null,
       items: [],
 
-      setOwner: (ownerId) => set({ ownerId, items: readItems(ownerId) }),
+      setOwner: async (ownerId) => {
+        set({ ownerId, items: ownerId ? [] : readItems(null) });
+        if (!ownerId) return;
+        try {
+          const { items } = await apiFetch<{ items: CartItem[] }>("/cart");
+          set((state) => state.ownerId === ownerId ? updateItems(ownerId, items) : state);
+        } catch {
+          set((state) => state.ownerId === ownerId ? updateItems(ownerId, readItems(ownerId)) : state);
+        }
+      },
 
       addItem: (item, quantity = 1) =>
         set((state) => {
           const existing = state.items.find((i) => sameLine(i, item));
-          if (existing) {
-            return updateItems(state.ownerId, state.items.map((i) =>
+          const nextItems = existing ? state.items.map((i) =>
               sameLine(i, item) ? { ...i, quantity: i.quantity + quantity } : i,
-            ));
+            ) : [...state.items, { ...item, quantity }];
+          if (state.ownerId) {
+            void apiFetch<{ items: CartItem[] }>("/cart/items", {
+              method: "POST",
+              body: JSON.stringify({ ...item, quantity }),
+            }).then(({ items }) => set((current) => current.ownerId === state.ownerId ? updateItems(state.ownerId, items) : current)).catch(() => undefined);
           }
-          return updateItems(state.ownerId, [...state.items, { ...item, quantity }]);
+          return updateItems(state.ownerId, nextItems);
         }),
 
       removeItem: (key) =>
-        set((state) => updateItems(state.ownerId, state.items.filter((i) => !sameLine(i, key)))),
+        set((state) => {
+          if (state.ownerId) {
+            void apiFetch<{ items: CartItem[] }>(`/cart/items/${encodeURIComponent(key.slug)}`, {
+              method: "DELETE",
+              body: JSON.stringify({ color: key.color, size: key.size }),
+            }).then(({ items }) => set((current) => current.ownerId === state.ownerId ? updateItems(state.ownerId, items) : current)).catch(() => undefined);
+          }
+          return updateItems(state.ownerId, state.items.filter((i) => !sameLine(i, key)));
+        }),
 
       updateQuantity: (key, quantity) =>
-        set((state) => updateItems(state.ownerId, quantity <= 0
-          ? state.items.filter((i) => !sameLine(i, key))
-          : state.items.map((i) => (sameLine(i, key) ? { ...i, quantity } : i)))),
+        set((state) => {
+          const existing = state.items.find((item) => sameLine(item, key));
+          if (state.ownerId && existing && quantity > 0) {
+            void apiFetch<{ items: CartItem[] }>(`/cart/items/${encodeURIComponent(key.slug)}`, {
+              method: "PATCH",
+              body: JSON.stringify({ color: key.color, size: key.size, quantity }),
+            }).then(({ items }) => set((current) => current.ownerId === state.ownerId ? updateItems(state.ownerId, items) : current)).catch(() => undefined);
+          } else if (state.ownerId && existing && quantity <= 0) {
+            void apiFetch<{ items: CartItem[] }>(`/cart/items/${encodeURIComponent(key.slug)}`, {
+              method: "DELETE",
+              body: JSON.stringify({ color: key.color, size: key.size }),
+            }).then(({ items }) => set((current) => current.ownerId === state.ownerId ? updateItems(state.ownerId, items) : current)).catch(() => undefined);
+          }
+          return updateItems(state.ownerId, quantity <= 0
+            ? state.items.filter((i) => !sameLine(i, key))
+            : state.items.map((i) => (sameLine(i, key) ? { ...i, quantity } : i)));
+        }),
 
-      clear: () => set((state) => updateItems(state.ownerId, [])),
+      clear: () => set((state) => {
+        if (state.ownerId) void apiFetch("/cart", { method: "DELETE" }).catch(() => undefined);
+        return updateItems(state.ownerId, []);
+      }),
     }));
 
 export function cartCount(items: CartItem[]): number {
