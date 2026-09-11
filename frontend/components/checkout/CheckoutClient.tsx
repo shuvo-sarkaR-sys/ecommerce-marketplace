@@ -156,7 +156,7 @@ export function CheckoutClient({ userName }: { userName: string }) {
             <LinkButton href="/cart" variant="secondary" size="lg">
               Back to bag
             </LinkButton>
-            <Button type="submit" size="lg" disabled={isSubmitting}>
+            <Button type="submit" className="text-white" size="lg" disabled={isSubmitting}>
               {isSubmitting ? "Placing order…" : "Place order"}
             </Button>
           </div>

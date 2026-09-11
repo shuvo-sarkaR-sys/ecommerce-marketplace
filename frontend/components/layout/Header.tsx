@@ -102,7 +102,7 @@ export function Header() {
 
       {openMenu && (
         <div onMouseEnter={() => setOpenMenu(openMenu)}>
-          <MegaMenu section={openMenu} />
+          <MegaMenu section={openMenu} onNavigate={() => setOpenMenu(null)} />
         </div>
       )}
 

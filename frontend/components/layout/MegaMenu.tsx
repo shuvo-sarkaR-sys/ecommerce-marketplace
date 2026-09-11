@@ -20,7 +20,7 @@ const MENUS = {
   },
 } as const;
 
-export function MegaMenu({ section }: { section: "women" | "men" }) {
+export function MegaMenu({ section, onNavigate }: { section: "women" | "men"; onNavigate: () => void }) {
   const menu = MENUS[section];
 
   return (
@@ -34,6 +34,7 @@ export function MegaMenu({ section }: { section: "women" | "men" }) {
                 <li key={item}>
                   <Link
                     href={`/shop/${section}?tag=${encodeURIComponent(item.toLowerCase())}`}
+                    onClick={onNavigate}
                     className="text-body text-ink hover:text-charcoal"
                   >
                     {item}
@@ -43,7 +44,7 @@ export function MegaMenu({ section }: { section: "women" | "men" }) {
             </ul>
           </div>
         ))}
-        <Link href={`/shop/${section}`} className="block">
+        <Link href={`/shop/${section}`} onClick={onNavigate} className="block">
           <ImagePlaceholder label={menu.promo} aspect="aspect-[4/5]" />
           <p className="mt-3 font-display text-h3 italic">{menu.promo}</p>
         </Link>

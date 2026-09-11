@@ -133,7 +133,7 @@ export default function CartPage() {
             <span>Total</span>
             <span>{formatBDT(subtotal)}</span>
           </div>
-          <LinkButton href="/checkout" variant="primary" size="lg" className="mt-6 w-full">
+          <LinkButton href="/checkout" variant="primary" size="lg" className="mt-6 text-white w-full">
             Proceed to Checkout
           </LinkButton>
         </div>

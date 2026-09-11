@@ -168,8 +168,8 @@ export function PurchasePanel({
       </div>
 
       <div className="flex flex-col gap-3">
-        <Button size="lg" onClick={addToBag} disabled={!canAdd}>
-          {justAdded ? "Added to Bag" : "Add to Bag"}
+        <Button size="lg" className="text-white" onClick={addToBag} disabled={!canAdd}>
+          {justAdded ? "Added to Cart" : "Add to Cart"}
         </Button>
         <Button size="lg" variant="secondary" onClick={buyNow} disabled={!canAdd}>
           Buy Now

@@ -23,7 +23,7 @@ export default function HomePage() {
       <TrendingBrands />
       <Editorial />
       <TrendingProducts />
-      <StyleInspiration />
+      {/* <StyleInspiration /> */}
       <Newsletter />
     </>
   );

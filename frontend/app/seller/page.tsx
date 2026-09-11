@@ -18,7 +18,7 @@ export default async function SellerDashboardPage() {
   if (user.role !== "seller" && user.role !== "admin") redirect("/");
 
   return (
-    <DashboardShell title="Seller Dashboard" subtitle="MAISON for Business" activeHref="/seller" navItems={NAV}>
+    <DashboardShell title="Seller Dashboard" subtitle="MAISON for Business" activeHref="/seller" navItems={NAV} showLogout>
       <p className="mb-8 text-body text-charcoal">
         Welcome, <span className="text-ink">{user.name}</span>. Product management, order
         handling, and analytics land in the next phase — this connects to the same

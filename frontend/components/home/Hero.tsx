@@ -38,14 +38,14 @@ export function Hero() {
           variants={reveal}
           className="label-caps mb-5 text-ivory/80"
         >
-          Autumn / Winter Collection
+          Autumn / Summer Collection
         </motion.p>
         <motion.h1
           custom={0.12}
           initial="hidden"
           animate="show"
           variants={reveal}
-          className="font-display text-[100px] font-bold text-display italic text-ivory"
+          className="font-display text-[85px] font-bold text-display italic text-ivory"
         >
           The New Standard <br/> of Style
         </motion.h1>
