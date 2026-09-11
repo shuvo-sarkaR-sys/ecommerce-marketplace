@@ -19,7 +19,8 @@ const workSans = Work_Sans({
   weight: ["400", "500", "600"],
   display: "swap",
 });
-
+const BACKEND_URL = process.env.BACKEND_URL ;
+console.log(BACKEND_URL, "BACKEND_URL in layout.tsx");
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {

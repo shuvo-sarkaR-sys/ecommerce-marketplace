@@ -7,8 +7,9 @@ const roleGuardedPrefixes: { prefix: string; roles: string[] }[] = [
   { prefix: "/admin", roles: ["admin"] },
 ];
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:5000";
-
+// const BACKEND_URL = process.env.BACKEND_URL
+const BACKEND_URL = process.env.BACKEND_URL ;
+console.log("BACKEND_URL", BACKEND_URL);  
 export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname === "/admin/login" || req.nextUrl.pathname === "/admin/register") {
     return NextResponse.next();

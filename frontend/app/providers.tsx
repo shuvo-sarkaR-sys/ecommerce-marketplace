@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { useCartStore } from "@/lib/store/cart";
+import { ApiLoadingIndicator } from "@/components/layout/ApiLoadingIndicator";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const setCartOwner = useCartStore((state) => state.setOwner);
@@ -26,6 +27,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [setCartOwner]);
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <ApiLoadingIndicator />
+      {children}
+    </QueryClientProvider>
   );
 }
