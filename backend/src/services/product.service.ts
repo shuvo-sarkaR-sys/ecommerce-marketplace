@@ -120,7 +120,7 @@ export async function createProduct(
 
   return Product.create({
     seller: sellerId,
-    brand: input.brand,
+    brand: brand._id,
     category: input.category,
     name: input.name,
     slug: `${slugify(input.name)}-${Math.random().toString(36).slice(2, 7)}`,

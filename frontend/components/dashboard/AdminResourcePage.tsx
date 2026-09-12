@@ -99,7 +99,7 @@ export function AdminResourcePage({ section }: { section: string }) {
       await apiFetch("/products", {
         method: "POST",
         body: JSON.stringify({
-          brand: form.get("brand") || undefined, customBrandName: selectedCustomBrandName || undefined, customBrandImage,
+          brand: selectedCustomBrandName ? undefined : form.get("brand") || undefined, customBrandName: selectedCustomBrandName || undefined, customBrandImage,
           category: form.get("category"), name: form.get("name"),
           description: form.get("description"), sku: form.get("sku"), price: Number(form.get("price")),
           compareAtPrice: form.get("compareAtPrice") ? Number(form.get("compareAtPrice")) : undefined,
