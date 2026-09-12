@@ -103,15 +103,19 @@ export async function createProduct(
 ) {
   let brand = input.brand ? await Brand.findById(input.brand) : null;
   if (!brand && input.customBrandName && role === "admin") {
-    brand = await Brand.create({
-      owner: sellerId,
-      name: input.customBrandName,
-      slug: `${slugify(input.customBrandName)}-${Math.random().toString(36).slice(2, 7)}`,
-      description: `The ${input.customBrandName} brand.`,
-      logo: input.customBrandImage,
-      category: "Fashion",
-      status: "approved",
-    });
+    const brandName = input.customBrandName.trim();
+    brand = await Brand.findOne({ name: { $regex: `^${brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" } });
+    if (!brand) {
+      brand = await Brand.create({
+        owner: sellerId,
+        name: brandName,
+        slug: `${slugify(brandName)}-${Math.random().toString(36).slice(2, 7)}`,
+        description: `The ${brandName} brand.`,
+        logo: input.customBrandImage,
+        category: "Fashion",
+        status: "approved",
+      });
+    }
   }
   if (!brand) throw new ApiError("Brand not found", 404);
   if (brand.owner.toString() !== sellerId && role !== "admin") {
